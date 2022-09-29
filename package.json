@@ -1,8 +1,8 @@
 {
-  "name": "discourse-pdf-previews",
-  "version": "1.0.0",
-  "repository": "https://github.com/discourse/discourse-pdf-previews",
-  "author": "Discourse",
+  "name": "discourse-pdf-previews-shuiyuan",
+  "version": "1.0.1",
+  "repository": "https://github.com/ShuiyuanSJTU/discourse-pdf-previews",
+  "author": "Discourse,pangbo",
   "license": "MIT",
   "devDependencies": {
     "eslint-config-discourse": "^3.2.0"

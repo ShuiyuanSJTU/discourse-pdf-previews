@@ -3,6 +3,13 @@ preview_mode:
   default: Inline
   description:
     en: "<b>Inline:</b> PDF attachments will be rendered inline within posts<br><br><b>New Tab:</b> PDF attachment links will take the user to a new tab where the PDF will be rendered"
+    zh_CN: "<b>Inline:</b> PDF附件会在帖子中内嵌渲染<br><br><b>New Tab:</b> PDF附件链接会打开新的标签页用于预览PDF"
   choices:
     - Inline
     - New Tab
+max_preview_size:
+  type: integer
+  default: 1048576
+  description:
+    en: "Maximum file size to enable PDF preview"
+    zh_CN: "启用PDF预览的最大文件大小"

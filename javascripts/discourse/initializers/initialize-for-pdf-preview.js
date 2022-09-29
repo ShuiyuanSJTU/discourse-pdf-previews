@@ -4,7 +4,7 @@ import { iconHTML } from "discourse-common/lib/icon-library";
 const PREVIEW_HEIGHT = 500;
 
 export default {
-  name: "pdf-previews",
+  name: "pdf-previews-shuiyuan",
   initialize(container) {
     withPluginApi("0.8.41", (api) => {
       const site = container.lookup("service:site");
@@ -14,6 +14,7 @@ export default {
 
       try {
         const previewModeSetting = settings.preview_mode;
+        const maxPreviewSize = settings.max_preview_size;
         const newTabIcon = () => {
           const template = document.createElement("template");
           template.innerHTML = iconHTML("external-link-alt", {
@@ -48,6 +49,11 @@ export default {
           }
         };
 
+        // const humanFileSize = (size) => {
+        //   let i = size === 0 ? 0 : Math.floor(Math.log(size) / Math.log(1024));
+        //   return (size / Math.pow(1024, i)).toFixed(2) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
+        // };
+
         api.decorateCookedElement(
           (post) => {
             const attachments = [...post.querySelectorAll(".attachment")];
@@ -56,11 +62,7 @@ export default {
               /\.pdf$/i.test(attachment.href)
             );
 
-            pdfs.forEach((pdf) => {
-              const fileSize = pdf.nextSibling;
-              if (fileSize) {
-                fileSize.nodeValue = "";
-              }
+            pdfs.forEach(async (pdf) => {
 
               const startsWithWhitespace = /^\s+/;
               const fileName = pdf.innerText;
@@ -77,41 +79,43 @@ export default {
               // we don't need the space anymore.
               pdf.innerText = pdf.innerText.trim();
 
-              // handle preview type
-              const preview = setUpPreviewType(pdf, renderMode);
+              const responseHeader = await fetch(pdf.href, { method: "HEAD" });
+              const contentSize = parseInt(responseHeader.headers.get("Content-Length"),10);
+
+              if (contentSize > maxPreviewSize) { return; }
 
               // the pdf is set to Content-Disposition: attachment; filename="filename.jpg"
               // on the server. this means we can't just use the href as the
               // src for the pdf preview elements.
-              const httpRequest = new XMLHttpRequest();
-              httpRequest.open("GET", pdf.href);
-              httpRequest.responseType = "blob";
+              const responseFile = await fetch(pdf.href, { method: "GET" });
+              if (!responseFile.ok) {
+                return;
+              }
+              const blobSrc = URL.createObjectURL(await responseFile.blob());
 
-              httpRequest.onreadystatechange = () => {
-                if (httpRequest.readyState !== XMLHttpRequest.DONE) {
-                  return;
-                }
+              // hide file size
+              const fileSizeNode = pdf.nextSibling;
+              if (fileSizeNode) {
+                fileSizeNode.remove();
+              }
+              
+              // handle preview type
+              const preview = setUpPreviewType(pdf, renderMode);
 
-                if (httpRequest.status === 200) {
-                  const src = URL.createObjectURL(httpRequest.response);
+              if (renderMode === "Inline") {
+                preview.src = blobSrc;
+              }
 
-                  if (renderMode === "Inline") {
-                    preview.src = src;
-                  }
-
-                  if (renderMode === "New Tab") {
-                    pdf.addEventListener("click", (event) => {
-                      event.preventDefault();
-                      window.open(src);
-                    });
-                  }
-                }
-              };
-              httpRequest.send();
+              if (renderMode === "New Tab") {
+                pdf.addEventListener("click", (event) => {
+                  event.preventDefault();
+                  window.open(blobSrc);
+                });
+              }
             });
           },
           {
-            id: "pdf-previews",
+            id: "pdf-previews-shuiyuan",
             onlyStream: true,
           }
         );
